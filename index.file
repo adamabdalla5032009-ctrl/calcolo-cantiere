@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CantierePro - Gestione Cantieri, Ore e Scadenze</title>
+    <style>
+        :root {
+            --primary: #ea580c;
+            --primary-dark: #c2410c;
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --text: #1e293b;
+            --muted: #64748b;
+            --border: #e2e8f0;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #d97706;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            padding-bottom: 40px;
+        }
+
+        header {
+            background-color: #0f172a;
+            color: white;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        header h1 {
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        header h1 span {
+            color: var(--primary);
+        }
+
+        .backup-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-small {
+            background: #334155;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .btn-small:hover {
+            background: #475569;
+        }
+
+        nav {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            overflow-x: auto;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        nav button {
+            flex: 1;
+            min-width: 120px;
+            padding: 14px 10px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-weight: 600;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+
+        nav button.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background: #fff7ed;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            font-size: 1.15rem;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--text);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 11px 18px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            font-size: 0.95rem;
+            margin-top: 5px;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-danger {
+            background: #fee2e2;
+            color: var(--danger);
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: #f8fafc;
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        .badge-ok { background: #dcfce7; color: var(--success); }
+        .badge-warn { background: #fef3c7; color: var(--warning); }
+        .badge-danger { background: #fee2e2; color: var(--danger); }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .kpi-box {
+            background: white;
+            padding: 18px;
+            border-radius: 10px;
+            border-left: 4px solid var(--primary);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .kpi-box span {
+            font-size: 0.85rem;
+            color: var(--muted);
+            display: block;
+        }
+
+        .kpi-box strong {
+            font-size: 1.5rem;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .text-success { color: var(--success); }
+        .text-danger { color: var(--danger); }
+        .empty-msg { color: var(--muted); font-style: italic; padding: 15px 0; text-align: center; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>🏗️ Cantiere<span>Pro</span></h1>
+    <div class="backup-btns">
+        <button class="btn-small" onclick="esportaDati()">⬇️ Salva Backup</button>
+        <button class="btn-small" onclick="document.getElementById('importFile').click()">⬆️ Ripristina</button>
+        <input type="file" id="importFile" style="display:none" accept=".json" onchange="importaDati(event)">
+    </div>
+</header>
+
+<nav>
+    <button class="active" onclick="cambiaTab('dashboard', this)">📊 Riepilogo</button>
+    <button onclick="cambiaTab('ore', this)">⏱️ Segna Ore</button>
+    <button onclick="cambiaTab('cantieri', this)">🏢 Cantieri & Utili</button>
+    <button onclick="cambiaTab('operai', this)">👷 Operai & Scadenze</button>
+</nav>
+
+<div class="container">
+
+    <!-- TAB 1: DASHBOARD -->
+    <div id="dashboard" class="section active">
+        <div class="kpi-grid">
+            <div class="kpi-box">
+                <span>Cantieri Attivi</span>
+                <strong id="kpi-cantieri">0</strong>
+            </div>
+            <div class="kpi-box">
+                <span>Ore Totali Registrate</span>
+                <strong id="kpi-ore">0 h</strong>
+            </div>
+            <div class="kpi-box">
+                <span>Utile Totale Cantieri</span>
+                <strong id="kpi-utile">€ 0,00</strong>
+            </div>
+            <div class="kpi-box" style="border-left-color: var(--danger);">
+                <span>Documenti in Scadenza / Scaduti</span>
+                <strong id="kpi-scadenze">0</strong>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>⚠️ Allerta Scadenze Documenti (Entro 30 giorni o Scaduti)</h2>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Operaio</th>
+                            <th>Documento</th>
+                            <th>Data Scadenza</th>
+                            <th>Stato</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dash-scadenze-list"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>💰 Stato Economico Cantieri</h2>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Cantiere</th>
+                            <th>Preventivo / Ricavo</th>
+                            <th>Costi (Ore + Materiali)</th>
+                            <th>Margine (Utile/Perdita)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dash-cantieri-list"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: SEGNA ORE -->
+    <div id="ore" class="section">
+        <div class="grid-2">
+            <div class="card">
+                <h2>⏱️ Registra Ore Lavorate</h2>
+                <form onsubmit="aggiungiOre(event)">
+                    <div class="form-group">
+                        <label>Data</label>
+                        <input type="date" id="ore-data" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Cantiere</label>
+                        <select id="ore-cantiere" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Operaio</label>
+                        <select id="ore-operaio" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Ore Lavorate (es. 8 o 8.5)</label>
+                        <input type="number" step="0.5" min="0.5" max="24" id="ore-quantita" placeholder="8" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Note lavoro svolto (opzionale)</label>
+                        <input type="text" id="ore-note" placeholder="Es. Gettata pilastri, tramezzi...">
+                    </div>
+                    <button type="submit" class="btn-primary">+ Registra Ore</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>📋 Ultime Registrazioni Ore</h2>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Operaio</th>
+                                <th>Cantiere</th>
+                                <th>Ore</th>
+                                <th>Costo</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-ore"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: CANTIERI E UTILI -->
+    <div id="cantieri" class="section">
+        <div class="grid-2">
+            <div class="card">
+                <h2>🏢 Nuovo Cantiere</h2>
+                <form onsubmit="aggiungiCantiere(event)">
+                    <div class="form-group">
+                        <label>Nome Cantiere / Cliente</label>
+                        <input type="text" id="cant-nome" placeholder="Es. Ristrutturazione Villa Rossi" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Importo Preventivo / Ricavo Pattuito (€)</label>
+                        <input type="number" step="0.01" id="cant-ricavo" placeholder="25000" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Costi Extra / Materiali / Noleggi iniziali (€)</label>
+                        <input type="number" step="0.01" id="cant-materiali" value="0" required>
+                    </div>
+                    <button type="submit" class="btn-primary">+ Crea Cantiere</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>➕ Aggiungi Spesa Materiali a Cantiere</h2>
+                <form onsubmit="aggiungiSpesaMateriale(event)">
+                    <div class="form-group">
+                        <label>Seleziona Cantiere</label>
+                        <select id="spesa-cantiere" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Importo Spesa Materiali / Fattura (€)</label>
+                        <input type="number" step="0.01" id="spesa-importo" placeholder="450.00" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Aggiungi Costo Materiali</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📊 Bilancio Dettagliato Cantieri (Guadagno vs Perdita)</h2>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Cantiere</th>
+                            <th>Ricavo Pattuito</th>
+                            <th>Costo Manodopera</th>
+                            <th>Costo Materiali</th>
+                            <th>Totale Costi</th>
+                            <th>Utile / Perdita</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista-cantieri"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: OPERAI E SCADENZE -->
+    <div id="operai" class="section">
+        <div class="grid-2">
+            <div class="card">
+                <h2>👷 Aggiungi Operaio</h2>
+                <form onsubmit="aggiungiOperaio(event)">
+                    <div class="form-group">
+                        <label>Nome e Cognome</label>
+                        <input type="text" id="op-nome" placeholder="Es. Marco Bianchi" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Qualifica</label>
+                        <input type="text" id="op-ruolo" placeholder="Es. Muratore / Capocantiere" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Costo Orario Aziendale (€/ora)</label>
+                        <input type="number" step="0.5" id="op-costo" placeholder="22.00" required>
+                    </div>
+                    <button type="submit" class="btn-primary">+ Salva Operaio</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>📄 Aggiungi Scadenza Documento</h2>
+                <form onsubmit="aggiungiDocumento(event)">
+                    <div class="form-group">
+                        <label>Operaio</label>
+                        <select id="doc-operaio" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo Documento</label>
+                        <select id="doc-tipo">
+                            <option value="Visita Medica / Idoneità">Visita Medica / Idoneità</option>
+                            <option value="Corso Sicurezza Generale/Specifica">Corso Sicurezza (Art. 37)</option>
+                            <option value="Patentino Gru / Mezzi / Ponteggi">Patentino Gru / Mezzi / Ponteggi</option>
+                            <option value="Corso Primo Soccorso / Antincendio">Corso Primo Soccorso / Antincendio</option>
+                            <option value="UNILAV / Contratto a Termine">UNILAV / Contratto a Termine</option>
+                            <option value="Carta d'Identità / Permesso Soggiorno">Documento Identità / Permesso</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Data di Scadenza</label>
+                        <input type="date" id="doc-scadenza" required>
+                    </div>
+                    <button type="submit" class="btn-primary">+ Registra Scadenza</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>👷 Elenco Operai e Costi Orari</h2>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Qualifica</th>
+                            <th>Costo Orario</th>
+                            <th>Ore Totali</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista-operai"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🗂️ Registro Completo Scadenze Documenti</h2>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Operaio</th>
+                            <th>Documento</th>
+                            <th>Scadenza</th>
+                            <th>Stato</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista-documenti"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Stato dell'applicazione salvato in LocalStorage
+    let db = JSON.parse(localStorage.getItem('cantiereProDB')) || {
+        operai: [],
+        cantieri: [],
+        ore: [],
+        documenti: []
+    };
+
+    // Imposta data odierna di default nel form ore
+    document.getElementById('ore-data').valueAsDate = new Date();
+
+    function salvaDB() {
+        localStorage.setItem('cantiereProDB', JSON.stringify(db));
+        aggiornaUI();
+    }
+
+    function cambiaTab(tabId, btn) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    function formatEuro(num) {
+        return '€ ' + Number(num).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatData(dataStr) {
+        if (!dataStr) return '';
+        const [y, m, d] = dataStr.split('-');
+        return `${d}/${m}/${y}`;
+    }
+
+    // --- OPERAI ---
+    function aggiungiOperaio(e) {
+        e.preventDefault();
+        db.operai.push({
+            id: Date.now(),
+            nome: document.getElementById('op-nome').value.trim(),
+            ruolo: document.getElementById('op-ruolo').value.trim(),
+            costoOrario: parseFloat(document.getElementById('op-costo').value)
+        });
+        e.target.reset();
+        salvaDB();
+    }
+
+    function eliminaOperaio(id) {
+        if (!confirm('Eliminare questo operaio?')) return;
+        db.operai = db.operai.filter(o => o.id !== id);
+        salvaDB();
+    }
+
+    // --- CANTIERI ---
+    function aggiungiCantiere(e) {
+        e.preventDefault();
+        db.cantieri.push({
+            id: Date.now(),
+            nome: document.getElementById('cant-nome').value.trim(),
+            ricavo: parseFloat(document.getElementById('cant-ricavo').value),
+            materiali: parseFloat(document.getElementById('cant-materiali').value) || 0
+        });
+        e.target.reset();
+        document.getElementById('cant-materiali').value = 0;
+        salvaDB();
+    }
+
+    function aggiungiSpesaMateriale(e) {
+        e.preventDefault();
+        const cantId = Number(document.getElementById('spesa-cantiere').value);
+        const importo = parseFloat(document.getElementById('spesa-importo').value);
+        const cantiere = db.cantieri.find(c => c.id === cantId);
+        if (cantiere) {
+            cantiere.materiali += importo;
+            e.target.reset();
+            salvaDB();
+        }
+    }
+
+    function eliminaCantiere(id) {
+        if (!confirm('Eliminare questo cantiere?')) return;
+        db.cantieri = db.cantieri.filter(c => c.id !== id);
+        salvaDB();
+    }
+
+    // --- ORE ---
+    function aggiungiOre(e) {
+        e.preventDefault();
+        const opId = Number(document.getElementById('ore-operaio').value);
+        const cantId = Number(document.getElementById('ore-cantiere').value);
+        const operaio = db.operai.find(o => o.id === opId);
+        const oreLavorate = parseFloat(document.getElementById('ore-quantita').value);
+
+        if (!operaio) return alert('Seleziona un operaio valido.');
+
+        db.ore.unshift({
+            id: Date.now(),
+            data: document.getElementById('ore-data').value,
+            cantiereId: cantId,
+            operaioId: opId,
+            ore: oreLavorate,
+            costoTotale: oreLavorate * operaio.costoOrario,
+            note: document.getElementById('ore-note').value.trim()
+        });
+
+        document.getElementById('ore-quantita').value = '';
+        document.getElementById('ore-note').value = '';
+        salvaDB();
+    }
+
+    function eliminaOre(id) {
+        db.ore = db.ore.filter(o => o.id !== id);
+        salvaDB();
+    }
+
+    // --- DOCUMENTI ---
+    function aggiungiDocumento(e) {
+        e.preventDefault();
+        db.documenti.push({
+            id: Date.now(),
+            operaioId: Number(document.getElementById('doc-operaio').value),
+            tipo: document.getElementById('doc-tipo').value,
+            scadenza: document.getElementById('doc-scadenza').value
+        });
+        e.target.reset();
+        salvaDB();
+    }
+
+    function eliminaDocumento(id) {
+        db.documenti = db.documenti.filter(d => d.id !== id);
+        salvaDB();
+    }
+
+    function statoScadenza(dataStr) {
+        const oggi = new Date();
+        oggi.setHours(0,0,0,0);
+        const scad = new Date(dataStr);
+        const diffGiorni = Math.ceil((scad - oggi) / (1000 * 60 * 60 * 24));
+
+        if (diffGiorni < 0) {
+            return { testo: `SCADUTO da ${Math.abs(diffGiorni)} gg`, classe: 'badge-danger', allerta: true };
+        } else if (diffGiorni <= 30) {
+            return { testo: `Scade tra ${diffGiorni} gg`, classe: 'badge-warn', allerta: true };
+        } else {
+            return { testo: 'Valido', classe: 'badge-ok', allerta: false };
+        }
+    }
+
+    // --- AGGIORNAMENTO INTERFACCIA ---
+    function aggiornaUI() {
+        // Popola Select
+        const selCantOre = document.getElementById('ore-cantiere');
+        const selCantSpesa = document.getElementById('spesa-cantiere');
+        const selOpOre = document.getElementById('ore-operaio');
+        const selOpDoc = document.getElementById('doc-operaio');
+
+        const optCantieri = db.cantieri.length 
+            ? db.cantieri.map(c => `<option value="${c.id}">${c.nome}</option>`).join('')
+            : '<option value="">-- Crea prima un cantiere --</option>';
+        selCantOre.innerHTML = optCantieri;
+        selCantSpesa.innerHTML = optCantieri;
+
+        const optOperai = db.operai.length
+            ? db.operai.map(o => `<option value="${o.id}">${o.nome} (${formatEuro(o.costoOrario)}/h)</option>`).join('')
+            : '<option value="">-- Aggiungi prima un operaio --</option>';
+        selOpOre.innerHTML = optOperai;
+        selOpDoc.innerHTML = optOperai;
+
+        // Tabella Operai
+        document.getElementById('lista-operai').innerHTML = db.operai.length ? db.operai.map(o => {
+            const oreOp = db.ore.filter(x => x.operaioId === o.id).reduce((acc, x) => acc + x.ore, 0);
+            return `<tr>
+                <td><strong>${o.nome}</strong></td>
+                <td>${o.ruolo}</td>
+                <td>${formatEuro(o.costoOrario)}/h</td>
+                <td>${oreOp} h</td>
+                <td><button class="btn-danger" onclick="eliminaOperaio(${o.id})">Elimina</button></td>
+            </tr>`;
+        }).join('') : '<tr><td colspan="5" class="empty-msg">Nessun operaio inserito.</td></tr>';
+
+        // Tabella Documenti & Allerte
+        let countAllerte = 0;
+        let htmlAllerte = '';
+        const docsOrdinati = [...db.documenti].sort((a, b) => new Date(a.scadenza) - new Date(b.scadenza));
+
+        document.getElementById('lista-documenti').innerHTML = docsOrdinati.length ? docsOrdinati.map(d => {
+            const op = db.operai.find(o => o.id === d.operaioId);
+            const nomeOp = op ? op.nome : 'Operaio rimosso';
+            const stato = statoScadenza(d.scadenza);
+            if (stato.allerta) {
+                countAllerte++;
+                htmlAllerte += `<tr>
+                    <td><strong>${nomeOp}</strong></td>
+                    <td>${d.tipo}</td>
+                    <td>${formatData(d.scadenza)}</td>
+                    <td><span class="badge ${stato.classe}">${stato.testo}</span></td>
+                </tr>`;
+            }
+            return `<tr>
+                <td><strong>${nomeOp}</strong></td>
+                <td>${d.tipo}</td>
+                <td>${formatData(d.scadenza)}</td>
+                <td><span class="badge ${stato.classe}">${stato.testo}</span></td>
+                <td><button class="btn-danger" onclick="eliminaDocumento(${d.id})">Elimina</button></td>
+            </tr>`;
+        }).join('') : '<tr><td colspan="5" class="empty-msg">Nessun documento registrato.</td></tr>';
+
+        document.getElementById('dash-scadenze-list').innerHTML = htmlAllerte || '<tr><td colspan="4" class="empty-msg">✅ Tutti i documenti sono in regola!</td></tr>';
+
+        // Tabella Cantieri & Calcolo Utile/Perdita
+        let utileComplessivo = 0;
+        let htmlDashCantieri = '';
+
+        document.getElementById('lista-cantieri').innerHTML = db.cantieri.length ? db.cantieri.map(c => {
+            const costoOre = db.ore.filter(x => x.cantiereId === c.id).reduce((acc, x) => acc + x.costoTotale, 0);
+            const costiTotali = costoOre + c.materiali;
+            const margine = c.ricavo - costiTotali;
+            utileComplessivo += margine;
+
+            const classeMargine = margine >= 0 ? 'text-success' : 'text-danger';
+            const badgeMargine = margine >= 0 
+                ? `<span class="badge badge-ok">+ ${formatEuro(margine)} (IN UTILE)</span>`
+                : `<span class="badge badge-danger">${formatEuro(margine)} (IN PERDITA)</span>`;
+
+            htmlDashCantieri += `<tr>
+                <td><strong>${c.nome}</strong></td>
+                <td>${formatEuro(c.ricavo)}</td>
+                <td>${formatEuro(costiTotali)}</td>
+                <td>${badgeMargine}</td>
+            </tr>`;
+
+            return `<tr>
+                <td><strong>${c.nome}</strong></td>
+                <td>${formatEuro(c.ricavo)}</td>
+                <td>${formatEuro(costoOre)}</td>
+                <td>${formatEuro(c.materiali)}</td>
+                <td><strong>${formatEuro(costiTotali)}</strong></td>
+                <td class="${classeMargine}"><strong>${formatEuro(margine)}</strong></td>
+                <td><button class="btn-danger" onclick="eliminaCantiere(${c.id})">Elimina</button></td>
+            </tr>`;
+        }).join('') : '<tr><td colspan="7" class="empty-msg">Nessun cantiere creato.</td></tr>';
+
+        document.getElementById('dash-cantieri-list').innerHTML = htmlDashCantieri || '<tr><td colspan="4" class="empty-msg">Nessun cantiere attivo.</td></tr>';
+
+        // Tabella Ore
+        document.getElementById('lista-ore').innerHTML = db.ore.length ? db.ore.map(r => {
+            const op = db.operai.find(o => o.id === r.operaioId);
+            const cant = db.cantieri.find(c => c.id === r.cantiereId);
+            return `<tr>
+                <td>${formatData(r.data)}</td>
+                <td>${op ? op.nome : '-'}</td>
+                <td>${cant ? cant.nome : '-'}${r.note ? `<br><small style="color:#64748b">${r.note}</small>` : ''}</td>
+                <td><strong>${r.ore} h</strong></td>
+                <td>${formatEuro(r.costoTotale)}</td>
+                <td><button class="btn-danger" onclick="eliminaOre(${r.id})">X</button></td>
+            </tr>`;
+        }).join('') : '<tr><td colspan="6" class="empty-msg">Nessuna ora registrata.</td></tr>';
+
+        // Aggiorna KPI Dashboard
+        const oreTotali = db.ore.reduce((acc, x) => acc + x.ore, 0);
+        document.getElementById('kpi-cantieri').innerText = db.cantieri.length;
+        document.getElementById('kpi-ore').innerText = oreTotali + ' h';
+        const kpiUtileEl = document.getElementById('kpi-utile');
+        kpiUtileEl.innerText = formatEuro(utileComplessivo);
+        kpiUtileEl.className = utileComplessivo >= 0 ? 'text-success' : 'text-danger';
+        document.getElementById('kpi-scadenze').innerText = countAllerte;
+    }
+
+    // --- BACKUP JSON ---
+    function esportaDati() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", "backup_cantiere_" + new Date().toISOString().slice(0,10) + ".json");
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+    }
+
+    function importaDati(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const imported = JSON.parse(e.target.result);
+                if (imported.operai && imported.cantieri && imported.ore && imported.documenti) {
+                    db = imported;
+                    salvaDB();
+                    alert('Backup ripristinato con successo!');
+                } else {
+                    alert('File di backup non valido.');
+                }
+            } catch (err) {
+                alert('Errore nella lettura del file.');
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    // Avvio iniziale
+    aggiornaUI();
+</script>
+
+</body>
+</html>
